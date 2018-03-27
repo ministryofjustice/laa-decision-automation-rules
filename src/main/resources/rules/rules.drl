@@ -1,0 +1,69 @@
+package com.laa.civil.means
+
+dialect "java" 
+
+import com.laa.model.civil.CivilDecisionReport
+import com.laa.model.MeansInformation
+import com.laa.model.civil.CivilCase;
+import java.math.BigDecimal;
+
+
+rule "Is Applicant on passported Benefit"
+salience 100
+
+	when
+		$decision : CivilDecisionReport(  )
+		$civilCase : CivilCase( meansInformation.passportedBenefit == true    )	
+	then
+	System.out.println("passported benefit has run");
+		$decision.setPassportedBenefit(true);	
+		
+		update($decision);	
+	
+end
+
+
+rule "Is Applicant total capital under 3000"
+salience 99
+	when
+		$decision : CivilDecisionReport(  )
+		$civilCase : CivilCase(meansInformation.totalIncome != null, meansInformation.totalIncome.compareTo(new BigDecimal("3000.00"))  <= 0)	
+	then		
+		System.out.println("Application is under the threshold");
+		$decision.setIncomelessThanThreshold(true);
+		update($decision);
+end
+
+rule "Is applicant on passported benefits and under the threshold"
+salience 98
+	when
+		$decision : CivilDecisionReport( meansAccepted == false, passportedBenefit == true, incomelessThanThreshold == true )
+		
+		
+	then		
+		$decision.setMeansAccepted(true);
+		System.out.println("decision has been made");
+	
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
