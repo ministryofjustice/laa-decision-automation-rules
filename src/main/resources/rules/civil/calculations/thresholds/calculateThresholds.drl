@@ -1,0 +1,25 @@
+package rules.civil.calculations.thresholds
+
+import com.laa.model.civil.CivilCase;
+import com.laa.model.enums.ProceedingType
+import com.laa.model.civil.CivilDecisionReport
+
+rule "Does this case have a non molestation order proceeding"
+	when
+		$decisionReport : CivilDecisionReport()
+  	    CivilCase($proceedings : proceedings contains ProceedingType.NON_MOLESTATION_ORDER )	
+	then
+		$decisionReport.setDomesticViolenceWaiver(true);
+		
+end
+
+rule "Does this case have a occupation order proceeding"
+	when
+		$decisionReport : CivilDecisionReport()
+  	    CivilCase($proceedings : proceedings contains ProceedingType.OCCUPATION_ORDER )		
+	then
+		$decisionReport.setDomesticViolenceWaiver(true);
+		
+end
+
+

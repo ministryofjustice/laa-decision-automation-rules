@@ -1,19 +1,25 @@
 package com.laa.stepdefs;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.kie.api.runtime.StatelessKieSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.laa.SpringIntegrationTest;
+import com.laa.model.Applicant;
+import com.laa.model.Dependent;
+import com.laa.model.EmployedIncome;
 import com.laa.model.MeansInformation;
+import com.laa.model.OtherIncome;
 import com.laa.model.civil.CivilCase;
 import com.laa.model.civil.CivilDecisionReport;
+import com.laa.model.enums.ProceedingType;
 
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -27,37 +33,64 @@ public class CivilStepDefinitions  extends SpringIntegrationTest{
 	private CivilDecisionReport decisionReport;
 	
 	@Autowired
+	@Qualifier("civilDecision")
 	private StatelessKieSession kieSession;
 
-	@Given("^a case (.*) passport benefit$")
-	public void caseWithorWithoutPassportBenefit(String withOrWithout) throws Throwable {
-		Boolean passportedBenefit = "with".equalsIgnoreCase(withOrWithout);
-		this.civilCase  = new CivilCase();
-		MeansInformation meansInformation = new MeansInformation();
-		meansInformation.setPassportedBenefit(passportedBenefit);
-		this.civilCase.setMeansInformation(meansInformation);
+	@Given("^a civil case$")
+	public void caseWithorWithoutPassportBenefit() throws Throwable {
+		this.civilCase = new CivilCase();
+		
 		
 	}
 	
-	@And("^a total capital of (\\d+\\.\\d+)$")
-	public void caseWithorWithoutPassportBenefit(BigDecimal totalCapital) throws Throwable {
-	
-		this.civilCase.getMeansInformation().setTotalIncome(totalCapital);
+	@And("^the following proceedings:")
+	public void withProceedings(List<ProceedingType> procedingTypes) throws Throwable {
+		
+		civilCase.setProceedings(procedingTypes);
 		
 	}
 	
+	@And("^citizen is employed with following income:")
+	public void citizenEmploymentIncome(List<EmployedIncome> employedincomeHistory) throws Throwable {
+		
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+		Applicant applicant = Optional.ofNullable(means.getApplicant()).orElse(new Applicant());
+		means.setApplicant(applicant);
+		applicant.setEmployedIncomeHistory(employedincomeHistory);
+		
 	
-	@When("^decision rules are fired$")
-	public void i_am_on_the_page_on_URL() throws Throwable {
+	}
+	
+	@And("^receives the following benefits:")
+	public void citizenOtherIncome(List<OtherIncome> otherincome) throws Throwable {
+		
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+		Applicant applicant = Optional.ofNullable(means.getApplicant()).orElse(new Applicant());
+		means.setApplicant(applicant);
+		applicant.setOtherIncome(otherincome.get(0));
+	}
+	
+	@And("^citizen has following children residing with them:")
+	public void citizenHasChildrenWithThem(List<Dependent> dependents) throws Throwable {
+		
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+	
+		means.setDependents(dependents);
+	}
+	
+	
+	
+	@When("^rule engine is executed$")
+	public void executeDecisionRules() throws Throwable {
 		
 		this.decisionReport = new CivilDecisionReport();
 		kieSession.execute(Stream.of(civilCase,decisionReport).collect(Collectors.toList()));
+		
 	}
 	
-	@Then("^means must be (.*)$")
-    public void she_will_get_$_back(String expected) throws Throwable {
-		Boolean meansDecisionExpected = "accepted".equalsIgnoreCase(expected);
-        assertEquals(meansDecisionExpected,decisionReport.isMeansAccepted());
+	@Then("^check waiver is applied$")
+    public void resultMustBe() throws Throwable {
+		assertTrue(decisionReport.isDomesticViolenceWaiver());
     }
 	
 	

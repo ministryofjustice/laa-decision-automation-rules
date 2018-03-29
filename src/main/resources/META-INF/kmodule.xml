@@ -1,3 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<kmodule xmlns="http://www.drools.org/xsd/kmodule">
 
-<kmodule xmlns="http://jboss.org/kie/6.0.0/kmodule"/>
+
+	<kbase name="calculationsBase" packages="rules.civil.calculations.thresholds">
+		<ksession name="civilCapitalCalculation" type="stateless" />
+	</kbase>
+
+	<kbase name="decisionBase" packages="rules.civil.decision" includes="calculationsBase">
+		<ksession name="civilDecision" type="stateless" />
+	</kbase>
+</kmodule>
