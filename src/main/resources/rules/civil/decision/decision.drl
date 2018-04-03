@@ -1,11 +1,53 @@
 package rules.civil.decision
 
+import com.laa.model.civil.CivilDecisionReport;
+import java.math.BigDecimal;
+
 dialect "java" 
 
 
 
+rule "Gross income limit check"
+	when
+		
+		$decision : CivilDecisionReport( grossIncome!=null && grossIncome.compareTo(new BigDecimal("2657.00")) < 0)
+		
+	then
+		$decision.setWithinGrossIncomeLimit(true);
+		update($decision);
+		
+end
+
+rule "Disposable income limit check"
+	when
+		
+		$decision : CivilDecisionReport( disposableIncome != null  && disposableIncome.compareTo(new BigDecimal("733.00")) < 0)
+		
+	then
+		$decision.setWithinDisposableIncomeLimit(true);
+		update($decision);
+		
+end
+
+rule "Capital assets limit check"
+	when
+		
+		$decision : CivilDecisionReport(capitalAssessment !=null && capitalAssessment.compareTo(new BigDecimal("3000.00")) < 0)
+		
+	then
+		$decision.setWithinCapitalAssetsLimit(true);
+		update($decision);
+end
 
 
+
+rule "Verify if means assesment is passed"
+	when
+		$decision: CivilDecisionReport(withinGrossIncomeLimit == true, withinDisposableIncomeLimit == true,  withinCapitalAssetsLimit == true )
+	then
+	
+		$decision.setMeasnPassed(true);	
+end
 
 
 

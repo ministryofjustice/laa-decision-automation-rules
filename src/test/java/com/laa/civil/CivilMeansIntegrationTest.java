@@ -9,8 +9,7 @@ import cucumber.api.junit.Cucumber;
 import cucumber.deps.com.thoughtworks.xstream.annotations.XStreamConverter;
 import cucumber.deps.com.thoughtworks.xstream.annotations.XStreamConverters;
 
-
-@XStreamConverters(@XStreamConverter(LocalDateConverter.class))
+@XStreamConverters(@XStreamConverter(value=LocalDateConverter.class))
 @RunWith(Cucumber.class)
 @CucumberOptions(features = "src/test/resources", glue= {"com.laa.stepdefs"}, plugin ={"pretty" , "html:target/civil-tests"})
 public class CivilMeansIntegrationTest {

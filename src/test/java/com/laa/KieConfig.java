@@ -2,8 +2,10 @@ package com.laa;
 
 import java.io.IOException;
 
+import org.drools.core.SessionConfigurationImpl;
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
+import org.kie.api.runtime.KieSessionConfiguration;
 import org.kie.api.runtime.StatelessKieSession;
 import org.kie.spring.KModuleBeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

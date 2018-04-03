@@ -2,7 +2,7 @@
 <kmodule xmlns="http://www.drools.org/xsd/kmodule">
 
 
-	<kbase name="calculationsBase" packages="rules.civil.calculations.thresholds">
+	<kbase name="calculationsBase" packages="rules.civil.calculations.thresholds, rules.civil.calculations.incomeandcapital">
 		<ksession name="civilCapitalCalculation" type="stateless" />
 	</kbase>
 
