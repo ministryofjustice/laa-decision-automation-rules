@@ -145,7 +145,7 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 	
 	@Then("^citizen is illegible$")
 	public void meansPassed() throws Throwable {
-		assertTrue( decisionReport.isMeasnPassed());
+		assertTrue( decisionReport.isMeansPassed());
 	}
 
 }

@@ -13,6 +13,7 @@ rule "Gross income limit check"
 		$decision : CivilDecisionReport( grossIncome!=null && grossIncome.compareTo(new BigDecimal("2657.00")) < 0)
 		
 	then
+				System.out.println(drools.getRule().getName());
 		$decision.setWithinGrossIncomeLimit(true);
 		update($decision);
 		
@@ -24,18 +25,31 @@ rule "Disposable income limit check"
 		$decision : CivilDecisionReport( disposableIncome != null  && disposableIncome.compareTo(new BigDecimal("733.00")) < 0)
 		
 	then
+				System.out.println(drools.getRule().getName());
 		$decision.setWithinDisposableIncomeLimit(true);
 		update($decision);
 		
 end
 
-rule "Capital assets limit check"
+rule "Capital assets under limit "
 	when
 		
 		$decision : CivilDecisionReport(capitalAssessment !=null && capitalAssessment.compareTo(new BigDecimal("3000.00")) < 0)
 		
 	then
+				System.out.println(drools.getRule().getName());
 		$decision.setWithinCapitalAssetsLimit(true);
+		update($decision);
+end
+
+rule "Capital assets over limit "
+	when
+		
+		$decision : CivilDecisionReport(capitalAssessment !=null && capitalAssessment.compareTo(new BigDecimal("3000.00")) > 0)
+		
+	then
+				System.out.println(drools.getRule().getName());
+		$decision.setWithinCapitalAssetsLimit(false);
 		update($decision);
 end
 
@@ -45,10 +59,29 @@ rule "Verify if means assesment is passed"
 	when
 		$decision: CivilDecisionReport(withinGrossIncomeLimit == true, withinDisposableIncomeLimit == true,  withinCapitalAssetsLimit == true )
 	then
-	
-		$decision.setMeasnPassed(true);	
+				System.out.println(drools.getRule().getName());
+		$decision.setMeansPassed(true);
+
 end
 
+rule "means assessment after failing capital assessment without domestic violence waiver"
+	when
+		$decision: CivilDecisionReport(domesticViolenceWaiver == false, withinGrossIncomeLimit == true, withinDisposableIncomeLimit == true,  withinCapitalAssetsLimit == false )
+	then
+			System.out.println(drools.getRule().getName());
+		$decision.setMeansPassed(false);
+
+end
+
+
+rule "means assessment after failing capital assessment with domestic violence waiver"
+	when
+		$decision: CivilDecisionReport(domesticViolenceWaiver == true, withinGrossIncomeLimit == true, withinDisposableIncomeLimit == true,  withinCapitalAssetsLimit == false )
+	then
+			System.out.println(drools.getRule().getName());
+		$decision.setMeansPassed(true);
+
+end
 
 
 

@@ -22,8 +22,8 @@ Feature: Test Civil case with domestic vioence proceeding
     															| child_care_fees | 200 | monthly|
     															| mortgage_payment	| 400 | monthly |		
     	And citizen has the follwoing properties:
-    															| propertyType | ownershipType | marketValue | chargeOnProperty | mortgaged | amountInPrinciple|
-    															| semi_detatched| part | 200000 | 	false | true | 100000 |	
+    															| propertyType | ownershipType | marketValue | chargeOnProperty | mortgaged | amountInPrinciple| subjectToProceedings| ownserhipSharePct |
+    															| semi_detatched| part | 200000 | 	false | true | 100000 |	false| 100 |
     	And citizen has the following bank accounts:
     															| accountType | accountOwner | wagesAndBenefitsPaidhere | accountNumber |  balance |	
     															| single | applicant | true | 12345678 | 500 |
@@ -33,7 +33,7 @@ Feature: Test Civil case with domestic vioence proceeding
     Then other income is 400.00
     Then gross income is 1400.00
     Then disposable income is 213.51
-    Then capital assessment is 500.00
+    Then capital assessment is 100500.0
     Then citizen is illegible
     
     
