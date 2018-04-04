@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import com.laa.model.Dependent;
 import com.laa.model.BankAccount;
 import com.laa.model.enums.AccountType;
+import com.laa.model.Property;
+import java.math.MathContext;
 
 rule "process employed income"
 lock-on-active  true
@@ -168,6 +170,28 @@ lock-on-active
 		update($decision);
 end
 
+
+rule "process property  for capital assessment that are not subject to proceedings"
+lock-on-active true
+	when
+	
+		$case : CivilCase($allProperties:  meansInformation.properties  )
+		$properties : ArrayList(  )  from collect( 	Property( subjectToProceedings == false ) from $allProperties )
+		$decision : CivilDecisionReport(  )	
+		
+	then
+		ArrayList<Property> typeSafeProperties = (ArrayList<Property>)$properties;
+		MathContext mctx = new MathContext(2,RoundingMode.HALF_UP);
+		for(Property property : typeSafeProperties){
+			BigDecimal equityAmount  = property.getMarketValue().subtract(new BigDecimal("100000.00").min(property.getAmountInPrinciple()));
+		
+			equityAmount = equityAmount.multiply(property.getOwnserhipSharePct()).divide(new BigDecimal("100.00"));
+	
+			$decision.setCapitalAssessment(Optional.ofNullable($decision.getCapitalAssessment()).orElse(BigDecimal.ZERO).add(equityAmount));
+		}
+
+		update($decision);
+end
 
 
 

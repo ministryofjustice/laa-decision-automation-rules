@@ -1,5 +1,9 @@
 package com.laa.rule.factcheckers;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+
 public class GenericFactChecker {
 	
 	private String fact;
@@ -45,5 +49,11 @@ public class GenericFactChecker {
 	}
 	
 	
+	
+	public static void main(String[] args) {
+		
+		BigDecimal value = new BigDecimal("100000.00");
+		System.out.println(value.compareTo(new BigDecimal("3000.00")) );
+	}
 
 }
