@@ -7,10 +7,10 @@ Feature: Test Civil case with domestic vioence proceeding
     														 | Residence_Order |
 															 | Contact_Order |
     And citizen is employed with following income history:
-    															| pay |  incomeTax | nationalInsurance | frequency |
-    															| 1000 | 200 | 50 | monthly |
-    															| 1000 | 200 | 50 | monthly |
-    															| 1000 | 200 | 50 | monthly |
+    															| pay |  incomeTax | nationalInsurance | frequency |employmentType|
+    															| 1000 | 200 | 50 | monthly |non_armed_forces|
+    															| 1000 | 200 | 50 | monthly |non_armed_forces|
+    															| 1000 | 200 | 50 | monthly |non_armed_forces|
     And citizen receives the following benefits:
     															| incomeType |	amount | frequency |
     															| child_benefit | 400 | monthly |	
@@ -35,6 +35,44 @@ Feature: Test Civil case with domestic vioence proceeding
     Then disposable income is 213.51
     Then capital assessment is 100500.0
     Then citizen is illegible
+    
+    
+	Scenario: Citizen is an employed person also in receipt of Incapacity Benefit, domiciled in the UK, aged between 16 and 60. Single and applying for Residence and Specific Orders from the Section 8 Matter Type. 
+Citzen is employed in two job and claims child benefit and received Incapcity Benefit for one of the children and Housing Benefit. Citizen has a bank account and is in rental accomodation.  
+	 Given a section 8 case
+    And the following proceedings:
+    														 | residence_order |
+															 | specific_issue_order |
+    And citizen is employed with following income history:
+    															| pay |  incomeTax | nationalInsurance | frequency |employmentType|
+    															| 320 | 60 | 15 | monthly | non_armed_forces |
+    															| 320 | 60 | 15 | monthly | non_armed_forces |
+    															| 320 | 60 | 15 | monthly | non_armed_forces |
+    And citizen receives the following benefits:
+    															| incomeType |	amount | frequency |
+    															| child_benefit | 600 | monthly |	
+    															| incapacity_benefit | 500 | monthly |	
+    															| carer_allowance | 400 | monthly |	
+    															| housing_benefit | 450 | monthly |	
+
+    	And citizen has following children residing with them:
+    															| name | relationToApplicant | dob |
+    															| 	jon  | child_of_applicant | 2008-05-01 |	
+    															| 	tom  | child_of_applicant | 2009-01-01 |		
+    															| 	bill  | child_of_applicant | 2010-12-31 |			
+    	And 	citizen has following outgoings:
+    															| outGoingType | amount | frequency |
+    															| rental_accomodation	| 450 | monthly |		
+    	And citizen has the follwoing capital assets:
+    															| assetType | amount | 
+    															| financial_bequest| 7000 |
+    	And citizen has the following bank accounts:
+    															| accountType | accountOwner | wagesAndBenefitsPaidhere | accountNumber |  balance |	
+    															| single | applicant | true | 54678954 | 50 |
+    When  rule engine is executed
+    Then average employed income is 320.00
+    Then other income is 1100.00
+ 
     
     
 

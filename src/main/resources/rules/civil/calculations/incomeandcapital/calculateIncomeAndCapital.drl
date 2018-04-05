@@ -69,12 +69,29 @@ lock-on-active true
 	then
 			System.out.println(drools.getRule().getName());
 		
-		$decision.setOtherIncome($benefit.getAmount());
+		$decision.setOtherIncome(Optional.ofNullable($decision.getOtherIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
 		$decision.setGrossIncome(Optional.ofNullable($decision.getGrossIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
 		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
 		update($decision);
 end
 
+rule "process incapacity beneit"
+lock-on-active true
+	when
+		$decision : CivilDecisionReport(  )
+		$case : CivilCase( $otherIncomes :  meansInformation.applicant.otherIncome  )	
+  		$benefit : OtherIncome( incomeType == IncomeType.INCAPACITY_BENEFIT ) from $otherIncomes
+		
+		
+	then
+			System.out.println(drools.getRule().getName());
+		
+
+		$decision.setOtherIncome(Optional.ofNullable($decision.getOtherIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
+		$decision.setGrossIncome(Optional.ofNullable($decision.getGrossIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
+		update($decision);
+end
 
 rule "process child care fees"
 lock-on-active 

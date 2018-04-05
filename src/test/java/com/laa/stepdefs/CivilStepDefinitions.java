@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import com.laa.SpringIntegrationTest;
 import com.laa.model.Applicant;
 import com.laa.model.BankAccount;
+import com.laa.model.CapitalAssets;
 import com.laa.model.Dependent;
 import com.laa.model.EmployedIncome;
 import com.laa.model.MeansInformation;
@@ -103,6 +104,15 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 
 		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
 		Optional.ofNullable(means.getBankAccounts()).orElse(new ArrayList<BankAccount>()).addAll(bankAccounts);
+	}
+	
+	@And("^citizen has the follwoing capital assets:")
+	public void citizenHasTheFollowingCapitalAssets(List<CapitalAssets> capitalAssets) throws Throwable {
+
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+		Applicant applicant = Optional.ofNullable(means.getApplicant()).orElse(new Applicant());
+		means.setApplicant(applicant);
+		applicant.setCapitalAssets(capitalAssets);
 	}
 
 	@When("^rule engine is executed$")
