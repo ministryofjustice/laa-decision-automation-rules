@@ -2,24 +2,48 @@ package rules.civil.calculations.thresholds
 
 import com.laa.model.civil.CivilCase;
 import com.laa.model.enums.ProceedingType
-import com.laa.model.civil.CivilDecisionReport
+import com.laa.model.civil.CivilDecisionReport;
+import com.laa.rule.factcheckers.Thresholds;
+import com.laa.rule.factcheckers.BigDecimalUtils;
+import java.math.BigDecimal;
+import com.laa.model.civil.enus.InvolvementType;
 
 rule "Does this case have a non molestation order proceeding"
 	when
-		$decisionReport : CivilDecisionReport()
-  	    CivilCase($proceedings : proceedings contains ProceedingType.NON_MOLESTATION_ORDER )	
+		$decision : CivilDecisionReport()
+  	    CivilCase(involvementType != InvolvementType.RESPONDENT,  $proceedings : proceedings contains ProceedingType.NON_MOLESTATION_ORDER )	
+  	    
 	then
-		$decisionReport.setDomesticViolenceWaiver(true);
+		$decision.setDomesticViolenceWaiver(true);
+		update($decision);
 		
 end
 
 rule "Does this case have a occupation order proceeding"
 	when
-		$decisionReport : CivilDecisionReport()
-  	    CivilCase($proceedings : proceedings contains ProceedingType.OCCUPATION_ORDER )		
+		$decision : CivilDecisionReport()
+  	    CivilCase(involvementType != InvolvementType.RESPONDENT, $proceedings : proceedings contains ProceedingType.OCCUPATION_ORDER )		
 	then
-		$decisionReport.setDomesticViolenceWaiver(true);
+		$decision.setDomesticViolenceWaiver(true);
+		update($decision);
 		
 end
+
+rule "initialise income and asset thresholds"
+
+	when
+	not Thresholds()
+		
+	then
+	
+	Thresholds thresholds = new Thresholds();
+	thresholds.setCapitalLowerLimit(new BigDecimal("3000.00"));
+	thresholds.setCapitalUpperLimit(new BigDecimal("7999.99"));
+	thresholds.setGrossIncomeUpperLimit(new BigDecimal("2657.00"));
+	thresholds.setDisposableIncomeUpperLimit(new BigDecimal("733.00"));
+	thresholds.setMortgageMonthlyCap(new BigDecimal("545.00"));
+	insert(thresholds);
+end
+
 
 

@@ -52,8 +52,9 @@ public class GenericFactChecker {
 	
 	public static void main(String[] args) {
 		
-		BigDecimal value = new BigDecimal("100000.00");
-		System.out.println(value.compareTo(new BigDecimal("3000.00")) );
+		BigDecimal value = new BigDecimal("100");
+		BigDecimal value2 = new BigDecimal("99");
+		System.out.println(value.min(value2));
 	}
 
 }

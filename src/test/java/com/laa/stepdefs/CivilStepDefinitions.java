@@ -1,6 +1,7 @@
 package com.laa.stepdefs;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
@@ -26,6 +27,7 @@ import com.laa.model.Outgoing;
 import com.laa.model.Property;
 import com.laa.model.civil.CivilCase;
 import com.laa.model.civil.CivilDecisionReport;
+import com.laa.model.civil.enus.InvolvementType;
 import com.laa.model.enums.ProceedingType;
 
 import cucumber.api.java.en.And;
@@ -38,6 +40,8 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 	private CivilCase civilCase;
 
 	private CivilDecisionReport decisionReport;
+	
+	
 
 	@Autowired
 	@Qualifier("civilDecision")
@@ -55,6 +59,14 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 		civilCase.setProceedings(procedingTypes);
 
 	}
+	
+	@And("^the citizen involvement type is \"([^\"]*)\"$")
+	public void involvementType(InvolvementType involvementType) throws Throwable {
+
+		civilCase.setInvolvementType(involvementType);
+
+	}
+
 
 	@And("^citizen is employed with following income history:")
 	public void citizenEmploymentIncome(List<EmployedIncome> employedincomeHistory) throws Throwable {
@@ -150,12 +162,27 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 	
 	@Then("^disposable income is (\\d+.\\d+)$")
 	public void disposableIncomeIs(BigDecimal disposableIncomeIs) throws Throwable {
-		assertEquals(disposableIncomeIs, decisionReport.getDisposableIncome());
+		assertTrue(disposableIncomeIs.compareTo(decisionReport.getDisposableIncome()) == 0);
 	}
 	
-	@Then("^citizen is illegible$")
+	@Then("^income contribution amount is (\\d+.\\d+)$")
+	public void incomeContrbutionIs(BigDecimal incomeContribution) throws Throwable {
+		assertTrue(incomeContribution.compareTo(decisionReport.getContributionAmount()) == 0);
+	}
+	@Then("^capital contribution amount is (\\d+.\\d+)$")
+	public void capital_contribution_amount_is(BigDecimal capitalContribution) {
+	    // Write code here that turns the phrase above into concrete actions
+		assertTrue(capitalContribution.compareTo(decisionReport.getCapitalContribution()) == 0);
+	}
+	
+	@Then("^citizen is eligible$")
 	public void meansPassed() throws Throwable {
 		assertTrue( decisionReport.isMeansPassed());
+	}
+	
+	@Then("^citizen is ineligible$")
+	public void meansFailed() throws Throwable {
+		assertFalse( decisionReport.isMeansPassed());
 	}
 
 }
