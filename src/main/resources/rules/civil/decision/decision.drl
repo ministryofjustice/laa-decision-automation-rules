@@ -3,14 +3,21 @@ package rules.civil.decision
 import com.laa.model.civil.CivilDecisionReport;
 import java.math.BigDecimal;
 
+import com.laa.rule.factcheckers.Thresholds;
+
+import com.laa.rule.factcheckers.BigDecimalUtils;
+import java.math.RoundingMode;
+import java.math.MathContext;
+
+
 dialect "java" 
 
 
 
-rule "Gross income limit check"
+rule "Gross income  under the limit"
 	when
 		
-		$decision : CivilDecisionReport( grossIncome!=null && grossIncome.compareTo(new BigDecimal("2657.00")) < 0)
+		$decision : CivilDecisionReport( grossIncome!=null && grossIncome.compareTo(new BigDecimal("2657.00")) <= 0)
 		
 	then
 				System.out.println(drools.getRule().getName());
@@ -19,22 +26,107 @@ rule "Gross income limit check"
 		
 end
 
-rule "Disposable income limit check"
+rule "Gross income  over the limit"
 	when
 		
-		$decision : CivilDecisionReport( disposableIncome != null  && disposableIncome.compareTo(new BigDecimal("733.00")) < 0)
+		$decision : CivilDecisionReport( grossIncome!=null && grossIncome.compareTo(new BigDecimal("2657.00")) > 0)
 		
 	then
-				System.out.println(drools.getRule().getName());
+		System.out.println(drools.getRule().getName());
+		$decision.setWithinGrossIncomeLimit(false);
+		update($decision);
+		
+end
+
+rule "Disposable income under the limit "
+	when
+		$thresholds : Thresholds( $disposableLimit: disposableIncomeUpperLimit  )
+		
+		$decision : CivilDecisionReport(  disposableIncome.compareTo($disposableLimit) <= 0)
+		
+	then
+		System.out.println($disposableLimit);
+		System.out.println(drools.getRule().getName());
 		$decision.setWithinDisposableIncomeLimit(true);
+		
+		
+		BigDecimal contributionDeductable = $decision.getDisposableIncome().subtract($thresholds.getDisposableBand1Limit());
+		
+		BigDecimal maxBand1Amount = $thresholds.getDisposableBand2Limit().subtract($thresholds.getDisposableBand1Limit());
+		BigDecimal maxBand2Amount = $thresholds.getDisposableBand3Limit().subtract($thresholds.getDisposableBand2Limit());
+		BigDecimal maxBand3Amount = $thresholds.getDisposableIncomeUpperLimit().subtract($thresholds.getDisposableBand3Limit());
+		
+		BigDecimal totalContribution = BigDecimal.ZERO;
+		
+	
+		
+		if(contributionDeductable.compareTo(BigDecimal.ZERO) > 0){
+			BigDecimal band1Deductable = contributionDeductable.subtract(maxBand1Amount);
+			if(band1Deductable.compareTo(BigDecimal.ZERO) >= 0){
+				totalContribution = totalContribution.add(maxBand1Amount.multiply($thresholds.getDisposableBand1()));
+				contributionDeductable = contributionDeductable.subtract(maxBand1Amount);
+			} else {
+				totalContribution = totalContribution.add(contributionDeductable.multiply($thresholds.getDisposableBand1()));
+				contributionDeductable = BigDecimal.ZERO;
+			}
+			
+		}
+		
+		if(contributionDeductable.compareTo(BigDecimal.ZERO) > 0){
+			BigDecimal band2Deductable = contributionDeductable.subtract(maxBand2Amount);
+			if(band2Deductable.compareTo(BigDecimal.ZERO) >= 0){
+				totalContribution = totalContribution.add(maxBand2Amount.multiply($thresholds.getDisposableBand2()));
+				contributionDeductable = contributionDeductable.subtract(maxBand2Amount);
+			} else {
+				totalContribution = totalContribution.add(contributionDeductable.multiply($thresholds.getDisposableBand2()));
+				contributionDeductable = BigDecimal.ZERO;
+			}
+			
+		}
+		
+		if(contributionDeductable.compareTo(BigDecimal.ZERO) > 0){
+			BigDecimal band3Deductable = contributionDeductable.subtract(maxBand1Amount);
+			if(band3Deductable.compareTo(BigDecimal.ZERO) >= 0){
+				totalContribution = totalContribution.add(maxBand3Amount.multiply($thresholds.getDisposableBand3()));
+				contributionDeductable = contributionDeductable.subtract(maxBand3Amount);
+			} else {
+				totalContribution = totalContribution.add(contributionDeductable.multiply($thresholds.getDisposableBand3()));
+				contributionDeductable = BigDecimal.ZERO;
+			}
+		}
+		
+		totalContribution = totalContribution.setScale(2,RoundingMode.HALF_UP);
+		$decision.setContributionAmount(totalContribution);
+		
+		
+	
+
+		update($decision);
+		
+end
+
+
+
+
+rule "Disposable income over the limit"
+	when
+		$thresholds : Thresholds( $disposableLimit: disposableIncomeUpperLimit  )
+		
+		$decision : CivilDecisionReport( disposableIncome != null  && disposableIncome.compareTo($disposableLimit) > 0)
+		
+	then
+		System.out.println(drools.getRule().getName());
+		$decision.setWithinDisposableIncomeLimit(false);
+	
 		update($decision);
 		
 end
 
 rule "Capital assets under limit "
 	when
+		$threshold : Thresholds(  $capitalUpperLimit:  capitalUpperLimit   )
 		
-		$decision : CivilDecisionReport(capitalAssessment !=null && capitalAssessment.compareTo(new BigDecimal("3000.00")) < 0)
+		$decision : CivilDecisionReport(capitalAssessment !=null && capitalAssessment.compareTo($capitalUpperLimit) < 0)
 		
 	then
 				System.out.println(drools.getRule().getName());
@@ -42,13 +134,35 @@ rule "Capital assets under limit "
 		update($decision);
 end
 
+rule "Capital assets contribution required "
+	when
+		$threshold : Thresholds( $capitalLowerLimit : capitalLowerLimit, $capitalUpperLimit:  capitalUpperLimit   )
+		
+		$decision : CivilDecisionReport($capitalAssessment: capitalAssessment !=null && BigDecimalUtils.isBetween($capitalAssessment,$capitalLowerLimit,$capitalUpperLimit))
+		
+	then
+		System.out.println(drools.getRule().getName());
+		$decision.setWithinCapitalAssetsLimit(true);
+		
+		$decision.setCapitalContribution($decision.getCapitalAssessment().subtract($threshold.getCapitalLowerLimit()));
+		update($decision);
+end
+
 rule "Capital assets over limit "
 	when
-		
-		$decision : CivilDecisionReport(capitalAssessment !=null && capitalAssessment.compareTo(new BigDecimal("3000.00")) > 0)
+		$threshold : Thresholds( $capitalUpperLimit:  capitalUpperLimit   )
+		$decision : CivilDecisionReport(capitalAssessment !=null && capitalAssessment.compareTo($capitalUpperLimit) > 0)
 		
 	then
 				System.out.println(drools.getRule().getName());
+				
+		BigDecimal capitalContribution = $decision.getCapitalAssessment();
+		if($decision.isDomesticViolenceWaiver()){
+			capitalContribution = capitalContribution.subtract($threshold.getCapitalLowerLimit());
+		
+		}
+	
+		$decision.setCapitalContribution(capitalContribution);
 		$decision.setWithinCapitalAssetsLimit(false);
 		update($decision);
 end
@@ -66,7 +180,7 @@ end
 
 rule "means assessment after failing capital assessment without domestic violence waiver"
 	when
-		$decision: CivilDecisionReport(domesticViolenceWaiver == false, withinGrossIncomeLimit == true, withinDisposableIncomeLimit == true,  withinCapitalAssetsLimit == false )
+		$decision: CivilDecisionReport(domesticViolenceWaiver == false , withinGrossIncomeLimit == true, withinDisposableIncomeLimit == true, withinCapitalAssetsLimit == false )
 	then
 			System.out.println(drools.getRule().getName());
 		$decision.setMeansPassed(false);
@@ -74,14 +188,16 @@ rule "means assessment after failing capital assessment without domestic violenc
 end
 
 
-rule "means assessment after failing capital assessment with domestic violence waiver"
+rule "means assessment  with domestic violence waiver"
 	when
-		$decision: CivilDecisionReport(domesticViolenceWaiver == true, withinGrossIncomeLimit == true, withinDisposableIncomeLimit == true,  withinCapitalAssetsLimit == false )
+		$decision: CivilDecisionReport(domesticViolenceWaiver == true )
 	then
 			System.out.println(drools.getRule().getName());
 		$decision.setMeansPassed(true);
 
 end
+
+
 
 
 

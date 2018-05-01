@@ -21,6 +21,8 @@ import com.laa.model.BankAccount;
 import com.laa.model.enums.AccountType;
 import com.laa.model.Property;
 import java.math.MathContext;
+import com.laa.model.CapitalAssets;
+import com.laa.rule.factcheckers.Thresholds
 
 rule "process employed income"
 lock-on-active  true
@@ -69,12 +71,48 @@ lock-on-active true
 	then
 			System.out.println(drools.getRule().getName());
 		
-		$decision.setOtherIncome($benefit.getAmount());
+		$decision.setOtherIncome(Optional.ofNullable($decision.getOtherIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
 		$decision.setGrossIncome(Optional.ofNullable($decision.getGrossIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
 		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
 		update($decision);
 end
 
+rule "process maintenance income"
+lock-on-active true
+	when
+		$decision : CivilDecisionReport(  )
+		$case : CivilCase( $otherIncomes :  meansInformation.applicant.otherIncome  )	
+  		$maintenance : OtherIncome( incomeType == IncomeType.MAINTENANCE ) from $otherIncomes
+		
+		
+	then
+			System.out.println(drools.getRule().getName());
+		
+		$decision.setOtherIncome(Optional.ofNullable($decision.getOtherIncome()).orElse(BigDecimal.ZERO).add($maintenance.getAmount()));
+		$decision.setGrossIncome(Optional.ofNullable($decision.getGrossIncome()).orElse(BigDecimal.ZERO).add($maintenance.getAmount()));
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).add($maintenance.getAmount()));
+		update($decision);
+end
+
+
+
+rule "process incapacity beneit"
+lock-on-active true
+	when
+		$decision : CivilDecisionReport(  )
+		$case : CivilCase( $otherIncomes :  meansInformation.applicant.otherIncome  )	
+  		$benefit : OtherIncome( incomeType == IncomeType.INCAPACITY_BENEFIT ) from $otherIncomes
+		
+		
+	then
+			System.out.println(drools.getRule().getName());
+		
+
+		$decision.setOtherIncome(Optional.ofNullable($decision.getOtherIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
+		$decision.setGrossIncome(Optional.ofNullable($decision.getGrossIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
+		update($decision);
+end
 
 rule "process child care fees"
 lock-on-active 
@@ -93,18 +131,68 @@ end
 
 
 rule "process mortgage outgoings"
-lock-on-active 
+
 	when
-	
+		not GenericFactChecker(fact  == "Mortgage payments Processed")
+		$thresholds : Thresholds(  )
 		$case : CivilCase( $outgoings : meansInformation.outgoings   )	
 		$mortgage : Outgoing( outGoingType == OutgoingType.MORTGAGE_PAYMENT ) from $outgoings 
+		$decision : 	CivilDecisionReport(  )
+
+		
+	then
+			System.out.println(drools.getRule().getName());
+		
+		BigDecimal housingBenefit = Optional.ofNullable($case.getMeansInformation().getApplicant().getOtherIncome()).orElse(new ArrayList<OtherIncome>()).stream().filter(oi -> oi.getIncomeType().equals(IncomeType.HOUSING_BENEFIT))
+		.findFirst().map(oi -> oi.getAmount()).orElse(BigDecimal.ZERO);
+		BigDecimal mortgageAfterBenfitDeducted = $mortgage.getAmount().subtract(housingBenefit);
+
+		$decision.setTotalOutgoings(Optional.ofNullable($decision.getTotalOutgoings()).orElse(BigDecimal.ZERO).add($thresholds.getMortgageMonthlyCap().min(mortgageAfterBenfitDeducted)));	
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).subtract($thresholds.getMortgageMonthlyCap().min(mortgageAfterBenfitDeducted)));	
+		insert( new GenericFactChecker("Mortgage payments Processed"));
+		update($decision);
+end
+
+rule "process accomodation rental outgoings"
+
+	when
+		not GenericFactChecker(fact  == "Rental accomodation Processed")
+		$thresholds : Thresholds(  )
+		$case : CivilCase( $outgoings : meansInformation.outgoings   )	
+		$rental : Outgoing( outGoingType == OutgoingType.RENTAL_ACCOMODATION ) from $outgoings 
+		
+
+		$decision : 	CivilDecisionReport(  )
+
+		
+	then
+			System.out.println(drools.getRule().getName());
+			
+		BigDecimal housingBenefit = Optional.ofNullable($case.getMeansInformation().getApplicant().getOtherIncome()).orElse(new ArrayList<OtherIncome>()).stream().filter(oi -> oi.getIncomeType().equals(IncomeType.HOUSING_BENEFIT))
+		.findFirst().map(oi -> oi.getAmount()).orElse(BigDecimal.ZERO);
+		
+		BigDecimal rentAfterBenfitDeducted = $rental.getAmount().subtract(housingBenefit);
+		
+
+		$decision.setTotalOutgoings(Optional.ofNullable($decision.getTotalOutgoings()).orElse(BigDecimal.ZERO).add(rentAfterBenfitDeducted));	
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).subtract(rentAfterBenfitDeducted));	
+		insert( new GenericFactChecker("Rental accomodation Processed"));
+		update($decision);
+end
+
+rule "process maintenance expense"
+lock-on-active 
+	when
+
+		$case : CivilCase( $outgoings : meansInformation.outgoings   )	
+		$maintenance : Outgoing( outGoingType == OutgoingType.MAINTENANCE ) from $outgoings 
 		$decision : 	CivilDecisionReport(  )
 		
 	then
 			System.out.println(drools.getRule().getName());
 		
-		$decision.setTotalOutgoings(Optional.ofNullable($decision.getTotalOutgoings()).orElse(BigDecimal.ZERO).add($mortgage.getAmount()));	
-		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).subtract($mortgage.getAmount()));	
+		$decision.setTotalOutgoings(Optional.ofNullable($decision.getTotalOutgoings()).orElse(BigDecimal.ZERO).add($maintenance.getAmount()));	
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).subtract($maintenance.getAmount()));	
 		update($decision);
 end
 
@@ -176,22 +264,46 @@ lock-on-active true
 	when
 	
 		$case : CivilCase($allProperties:  meansInformation.properties  )
-		$properties : ArrayList(  )  from collect( 	Property( subjectToProceedings == false ) from $allProperties )
+		$properties : ArrayList(  )  from collect( 	Property(  ) from $allProperties )
 		$decision : CivilDecisionReport(  )	
 		
 	then
 		ArrayList<Property> typeSafeProperties = (ArrayList<Property>)$properties;
-		MathContext mctx = new MathContext(2,RoundingMode.HALF_UP);
 		for(Property property : typeSafeProperties){
 			BigDecimal equityAmount  = property.getMarketValue().subtract(new BigDecimal("100000.00").min(property.getAmountInPrinciple()));
+			
+			BigDecimal notionalSellingCost = property.getMarketValue().multiply(new BigDecimal("0.03"));
+			equityAmount = equityAmount.subtract(notionalSellingCost);
 		
 			equityAmount = equityAmount.multiply(property.getOwnserhipSharePct()).divide(new BigDecimal("100.00"));
+			
+			if(property.isMainDwelling()){
+				equityAmount = equityAmount.subtract(new BigDecimal("100000.00"));
+			}
+			if(property.isSubjectToProceedings()){
+				equityAmount = equityAmount.subtract(new BigDecimal("100000.00"));
+			}
 	
-			$decision.setCapitalAssessment(Optional.ofNullable($decision.getCapitalAssessment()).orElse(BigDecimal.ZERO).add(equityAmount));
+			$decision.setCapitalAssessment(Optional.ofNullable($decision.getCapitalAssessment()).orElse(BigDecimal.ZERO).add(BigDecimal.ZERO.max(equityAmount)));
 		}
 
 		update($decision);
 end
 
+
+rule "process capital assets financial bequests"
+lock-on-active 
+	when
+		$case : CivilCase( $capitalAssets : meansInformation.applicant.capitalAssets  )
+		$bequests : ArrayList(  )  from collect( 	CapitalAssets( assetType == AssetType.FINANCIAL_BEQUEST ) from $capitalAssets )
+		$decision : CivilDecisionReport(  )	
+	then
+		ArrayList<CapitalAssets> bequests  = (ArrayList<CapitalAssets>) $bequests;
+		BigDecimal totalBequests = bequests.stream().map(asset -> asset.getAmount())
+		.reduce(BigDecimal.ZERO, BigDecimal::add);
+		
+		$decision.setCapitalAssessment(Optional.ofNullable($decision.getCapitalAssessment()).orElse(BigDecimal.ZERO).add(totalBequests));
+		update($decision);
+end
 
 
