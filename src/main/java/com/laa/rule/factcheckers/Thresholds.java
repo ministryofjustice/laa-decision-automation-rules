@@ -9,12 +9,11 @@ public class Thresholds {
 	
 	private BigDecimal capitalUpperLimit;
 	
-
-	
 	private BigDecimal grossIncomeUpperLimit;
 
-	
 	private BigDecimal disposableIncomeUpperLimit;
+	
+	private BigDecimal disposableIncomeUpperLimitDV;
 	
 	private BigDecimal disposableBand0 = BigDecimal.ZERO;
 	
@@ -48,8 +47,6 @@ public class Thresholds {
 		this.capitalUpperLimit = capitalUpperLimit;
 	}
 
-
-
 	public BigDecimal getGrossIncomeUpperLimit() {
 		return grossIncomeUpperLimit;
 	}
@@ -57,7 +54,6 @@ public class Thresholds {
 	public void setGrossIncomeUpperLimit(BigDecimal grossIncomeUpperLimit) {
 		this.grossIncomeUpperLimit = grossIncomeUpperLimit;
 	}
-
 
 	public BigDecimal getDisposableIncomeUpperLimit() {
 		return disposableIncomeUpperLimit;
@@ -130,10 +126,14 @@ public class Thresholds {
 	public void setMortgageMonthlyCap(BigDecimal mortgageMonthlyCap) {
 		this.mortgageMonthlyCap = mortgageMonthlyCap;
 	}
+	
+	public BigDecimal getDisposableIncomeUpperLimitDV() {
+		return disposableIncomeUpperLimitDV;
+	}
 
-	
-	
-	
+	public void setDisposableIncomeUpperLimitDV(BigDecimal disposableIncomeUpperLimitDV) {
+		this.disposableIncomeUpperLimitDV = disposableIncomeUpperLimitDV;
+	}
 	
 	
 }

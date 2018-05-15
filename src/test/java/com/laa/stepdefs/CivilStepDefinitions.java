@@ -24,11 +24,14 @@ import com.laa.model.EmployedIncome;
 import com.laa.model.MeansInformation;
 import com.laa.model.OtherIncome;
 import com.laa.model.Outgoing;
+import com.laa.model.Partner;
 import com.laa.model.Property;
 import com.laa.model.civil.CivilCase;
 import com.laa.model.civil.CivilDecisionReport;
 import com.laa.model.civil.enus.InvolvementType;
 import com.laa.model.enums.ProceedingType;
+//import com.laa.rule.*;
+//import com.laa.rule.factcheckers.ClientPartnerCheck;
 
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -50,7 +53,11 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 	@Given("^a section 8 case$")
 	public void caseWithorWithoutPassportBenefit() throws Throwable {
 		this.civilCase = new CivilCase();
-
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+		Applicant applicant = Optional.ofNullable(means.getApplicant()).orElse(new Applicant());
+		means.setApplicant(applicant);
+		this.civilCase.setMeansInformation(means);
+		
 	}
 
 	@And("^the following proceedings:")
@@ -78,6 +85,17 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 		applicant.setEmployedIncomeHistory(employedincomeHistory);
 
 	}
+	
+	@And("^citizen's partner is employed with following income history:")
+	public void partnerEmploymentIncome(List<EmployedIncome> employedincomeHistory) throws Throwable {
+
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+		Partner partner = Optional.ofNullable(means.getPartner()).orElse(new Partner());
+		means.setPartner(partner);
+		this.civilCase.setMeansInformation(means);
+		partner.setEmployedIncomeHistory(employedincomeHistory);
+
+	}
 
 	@And("^citizen receives the following benefits:")
 	public void citizenOtherIncome(List<OtherIncome> otherincome) throws Throwable {
@@ -89,12 +107,30 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 		exitingOtherIncome.addAll(otherincome);
 		applicant.setOtherIncome(exitingOtherIncome);
 	}
+	
 
-	@And("^citizen has following children residing with them:")
+	@And("^citizen has following dependents residing with them:")
 	public void citizenHasChildrenWithThem(List<Dependent> dependents) throws Throwable {
 
 		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
 		means.setDependents(dependents);
+		
+	}
+	
+	@And("^citizen has partner")
+	public void citizenHasPartner(List<Dependent> dependents) throws Throwable {
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+		means.setDependents(dependents);
+	}
+	
+	@And("^citizen has following partner residing with them:")
+	public void citizenHasEmployedPartner(List<EmployedIncome> employedincomeHistory) throws Throwable {
+
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+		Partner partner = Optional.ofNullable(means.getPartner()).orElse(new Partner());
+		means.setPartner(partner);
+		this.civilCase.setMeansInformation(means);
+		partner.setEmployedIncomeHistory(employedincomeHistory);
 	}
 
 	@And("^citizen has following outgoings:")
@@ -104,8 +140,15 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 		means.setOutgoings(outgoings);
 	}
 
-	@And("^citizen has the follwoing properties:")
+	@And("^citizen has the following properties:")
 	public void citizenHasFollowingProperties(List<Property> properties) throws Throwable {
+
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+		means.setProperties(properties);
+	}
+	
+	@And("^citizen's partner has the following properties:")
+	public void partnerHasFollowingProperties(List<Property> properties) throws Throwable {
 
 		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
 		means.setProperties(properties);
@@ -118,7 +161,14 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 		Optional.ofNullable(means.getBankAccounts()).orElse(new ArrayList<BankAccount>()).addAll(bankAccounts);
 	}
 	
-	@And("^citizen has the follwoing capital assets:")
+	@And("^citizen's partner has the following bank accounts:")
+	public void partnerHasFollowingBankaccounts(List<BankAccount> bankAccounts) throws Throwable {
+
+		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
+		Optional.ofNullable(means.getBankAccounts()).orElse(new ArrayList<BankAccount>()).addAll(bankAccounts);
+	}
+	
+	@And("^citizen has the following capital assets:")
 	public void citizenHasTheFollowingCapitalAssets(List<CapitalAssets> capitalAssets) throws Throwable {
 
 		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
@@ -153,6 +203,7 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 	@Then("^gross income is (\\d+.\\d+)$")
 	public void grossIncomeIs(BigDecimal grossIncome) throws Throwable {
 		assertEquals(grossIncome, decisionReport.getGrossIncome());
+		System.out.println("gross income is : £ " + grossIncome);
 	}
 	
 	@Then("^capital assessment is (\\d+.\\d+)$")
@@ -162,21 +213,25 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 	
 	@Then("^disposable income is (\\d+.\\d+)$")
 	public void disposableIncomeIs(BigDecimal disposableIncomeIs) throws Throwable {
+		System.out.println("disposable income is : £ " + decisionReport.getDisposableIncome());
 		assertTrue(disposableIncomeIs.compareTo(decisionReport.getDisposableIncome()) == 0);
 	}
 	
 	@Then("^income contribution amount is (\\d+.\\d+)$")
 	public void incomeContrbutionIs(BigDecimal incomeContribution) throws Throwable {
+		System.out.println("contribution income is : £ " + decisionReport.getContributionAmount());
 		assertTrue(incomeContribution.compareTo(decisionReport.getContributionAmount()) == 0);
 	}
 	@Then("^capital contribution amount is (\\d+.\\d+)$")
 	public void capital_contribution_amount_is(BigDecimal capitalContribution) {
 	    // Write code here that turns the phrase above into concrete actions
+		System.out.println("contribution capital is : £ " + decisionReport.getCapitalContribution());
 		assertTrue(capitalContribution.compareTo(decisionReport.getCapitalContribution()) == 0);
 	}
 	
 	@Then("^citizen is eligible$")
 	public void meansPassed() throws Throwable {
+		//System.out.println("is means passed " + decisionReport.isMeansPassed());
 		assertTrue( decisionReport.isMeansPassed());
 	}
 	

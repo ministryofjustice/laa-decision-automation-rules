@@ -23,13 +23,16 @@ import com.laa.model.Property;
 import java.math.MathContext;
 import com.laa.model.CapitalAssets;
 import com.laa.rule.factcheckers.Thresholds
+import com.laa.rule.factcheckers.MeansInformationCheck;
 
-rule "process employed income"
+
+rule "process applicant employed income"
 lock-on-active  true
 	when
-		$case : CivilCase(  meansInformation.applicant.employedIncomeHistory.empty   == false)	
+		
+		$case : CivilCase( meansInformation.applicant.employedIncomeHistory != null )
 
-		$decision : CivilDecisionReport( employmentIncome == null  )
+		$decision : CivilDecisionReport(employmentIncome == null)
 		
 	then
 		System.out.println(drools.getRule().getName());
@@ -37,7 +40,7 @@ lock-on-active  true
 		BigDecimal salaySum = meansInformation.getApplicant().getEmployedIncomeHistory().stream()
 			.map(ei -> ei.getPay())
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
-			
+				
 		BigDecimal incomeTaxSum = meansInformation.getApplicant().getEmployedIncomeHistory().stream()
 			.map(ei -> ei.getIncomeTax())
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -47,18 +50,53 @@ lock-on-active  true
 			.reduce(BigDecimal.ZERO, BigDecimal::add);
 			
 		BigDecimal averageMonthlySalary = salaySum.divide(new BigDecimal(meansInformation.getApplicant().getEmployedIncomeHistory().size()), RoundingMode.HALF_EVEN);
-		BigDecimal averageNationalInsuranceSum = incomeTaxSum.divide(new BigDecimal(meansInformation.getApplicant().getEmployedIncomeHistory().size()), RoundingMode.HALF_EVEN);
-		BigDecimal averageIncomeTax = nationalInsuranceSum.divide(new BigDecimal(meansInformation.getApplicant().getEmployedIncomeHistory().size()), RoundingMode.HALF_EVEN);
-
+		BigDecimal averageIncomeTax = incomeTaxSum.divide(new BigDecimal(meansInformation.getApplicant().getEmployedIncomeHistory().size()), RoundingMode.HALF_EVEN);
+		BigDecimal averageNationalInsuranceSum = nationalInsuranceSum.divide(new BigDecimal(meansInformation.getApplicant().getEmployedIncomeHistory().size()), RoundingMode.HALF_EVEN);
+		
 		$decision.setEmploymentIncome(averageMonthlySalary);
 		$decision.setPayeAndNi(BigDecimal.ZERO.add(averageIncomeTax).add(averageNationalInsuranceSum));
-		$decision.setGrossIncome(Optional.ofNullable($decision.getGrossIncome()).orElse(BigDecimal.ZERO).add($decision.getEmploymentIncome()));
+		$decision.setGrossIncome(Optional.ofNullable($decision.getGrossIncome()).orElse(BigDecimal.ZERO).add($decision.getEmploymentIncome())); 
 		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).add($decision.getEmploymentIncome()));
 		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).subtract($decision.getPayeAndNi()));
 				
 		update($decision);
 end
 
+rule "process partner employed income"
+lock-on-active  true
+	when
+		
+	    $case : CivilCase(  meansInformation.partner != null, meansInformation.partner.employedIncomeHistory != null) 
+			
+		$decision : CivilDecisionReport( partnerEmploymentIncome == null  )
+		
+	then
+		
+		System.out.println(drools.getRule().getName());
+		MeansInformation meansInformation = $case.getMeansInformation();
+		BigDecimal salarySum = meansInformation.getPartner().getEmployedIncomeHistory().stream()
+			.map(ei -> ei.getPay())
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+			
+		BigDecimal incomeTaxSum = meansInformation.getPartner().getEmployedIncomeHistory().stream()
+			.map(ei -> ei.getIncomeTax())
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+			
+		BigDecimal nationalInsuranceSum = meansInformation.getPartner().getEmployedIncomeHistory().stream()
+			.map(ei -> ei.getNationalInsurance())
+			.reduce(BigDecimal.ZERO, BigDecimal::add);
+			
+		BigDecimal averageMonthlySalary = salarySum.divide(new BigDecimal(meansInformation.getPartner().getEmployedIncomeHistory().size()), RoundingMode.HALF_EVEN);
+		BigDecimal averageNationalInsuranceSum = incomeTaxSum.divide(new BigDecimal(meansInformation.getPartner().getEmployedIncomeHistory().size()), RoundingMode.HALF_EVEN);
+		BigDecimal averageIncomeTax = nationalInsuranceSum.divide(new BigDecimal(meansInformation.getPartner().getEmployedIncomeHistory().size()), RoundingMode.HALF_EVEN);
+		
+		$decision.setPartnerEmploymentIncome(averageMonthlySalary);
+		$decision.setPartnerPayeAndNi(BigDecimal.ZERO.add(averageIncomeTax).add(averageNationalInsuranceSum));
+		$decision.setGrossIncome(Optional.ofNullable($decision.getGrossIncome()).orElse(BigDecimal.ZERO).add($decision.getPartnerEmploymentIncome()));
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).add($decision.getPartnerEmploymentIncome()));
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).subtract($decision.getPartnerPayeAndNi()));
+		update($decision);
+end
 
 rule "process child benefit"
 lock-on-active true
@@ -96,12 +134,30 @@ end
 
 
 
-rule "process incapacity beneit"
+rule "process incapacity benefit"
 lock-on-active true
 	when
 		$decision : CivilDecisionReport(  )
 		$case : CivilCase( $otherIncomes :  meansInformation.applicant.otherIncome  )	
   		$benefit : OtherIncome( incomeType == IncomeType.INCAPACITY_BENEFIT ) from $otherIncomes
+		
+		
+	then
+			System.out.println(drools.getRule().getName());
+		
+
+		$decision.setOtherIncome(Optional.ofNullable($decision.getOtherIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
+		$decision.setGrossIncome(Optional.ofNullable($decision.getGrossIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).add($benefit.getAmount()));
+		update($decision);
+end
+
+rule "process miscellaneous income"
+lock-on-active true
+	when
+		$decision : CivilDecisionReport(  )
+		$case : CivilCase( $otherIncomes :  meansInformation.applicant.otherIncome  )	
+  		$benefit : OtherIncome( incomeType == IncomeType.MISCELLANEOUS ) from $otherIncomes
 		
 		
 	then
@@ -196,11 +252,26 @@ lock-on-active
 		update($decision);
 end
 
+rule "process criminal legal aid expense"
+lock-on-active 
+	when
+
+		$case : CivilCase( $outgoings : meansInformation.outgoings   )	
+		$legalaid : Outgoing( outGoingType == OutgoingType.CRIMINAL_LEGAL_AID ) from $outgoings 
+		$decision : 	CivilDecisionReport(  )
+		
+	then
+			System.out.println(drools.getRule().getName());
+		
+		$decision.setTotalOutgoings(Optional.ofNullable($decision.getTotalOutgoings()).orElse(BigDecimal.ZERO).add($legalaid.getAmount()));	
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome()).orElse(BigDecimal.ZERO).subtract($legalaid.getAmount()));	
+		update($decision);
+end
 
 rule "deduct employment expense from disposable income"
 
 	when
-		$case : CivilCase(  meansInformation.applicant.employedIncomeHistory.empty == false  )
+		$case : CivilCase(   meansInformation.applicant.employedIncomeHistory != null  )
 		$decision : 	CivilDecisionReport()
 		not GenericFactChecker(fact  == "Employment Expense added")
 	then
@@ -211,9 +282,7 @@ rule "deduct employment expense from disposable income"
 		update($decision);
 end
 
-
-
-rule "process deduct child dependants allowance "
+rule "process deduct child dependents allowance "
 lock-on-active 
 	when
 
@@ -223,8 +292,8 @@ lock-on-active
 	then
 	
 				System.out.println(drools.getRule().getName());
+				
 		ArrayList<Dependent> typeSafeDeps  = (ArrayList<Dependent>)$dependents;
-
 
 	
 		BigDecimal totalDependentsAllowance = typeSafeDeps.stream()
@@ -234,9 +303,32 @@ lock-on-active
 		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome())
 								.orElse(BigDecimal.ZERO)
 								.subtract(totalDependentsAllowance));
-		
+			
 end
 
+rule "process deduct partner allowance"
+lock-on-active 
+	when
+		$case : CivilCase($relations :  meansInformation.dependents   )
+		$dependents : ArrayList(  )  from collect( Dependent( relationToApplicant ==  RelationToApplicant.PARTNER_OF_APPLICANT) from $relations )
+		$decision : 	CivilDecisionReport( )
+	then
+	
+				System.out.println(drools.getRule().getName());
+				
+		ArrayList<Dependent> typeSafeDeps  = (ArrayList<Dependent>)$dependents;
+
+	
+		BigDecimal totalDependentsAllowance = typeSafeDeps.stream()
+		.map(dep -> new BigDecimal("181.91") )
+		.reduce(BigDecimal.ZERO, BigDecimal::add);
+									
+		$decision.setDisposableIncome(Optional.ofNullable($decision.getDisposableIncome())
+								.orElse(BigDecimal.ZERO)
+								.subtract(totalDependentsAllowance));
+
+		
+end
 
 rule "process single bank accounts"
 lock-on-active 

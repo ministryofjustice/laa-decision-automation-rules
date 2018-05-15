@@ -11,7 +11,7 @@ import com.laa.model.civil.enus.InvolvementType;
 rule "Does this case have a non molestation order proceeding"
 	when
 		$decision : CivilDecisionReport()
-  	    CivilCase(involvementType != InvolvementType.RESPONDENT,  $proceedings : proceedings contains ProceedingType.NON_MOLESTATION_ORDER )	
+  	    CivilCase(involvementType != InvolvementType.RESPONDENT, $proceedings : proceedings contains ProceedingType.NON_MOLESTATION_ORDER )	
   	    
 	then
 		$decision.setDomesticViolenceWaiver(true);
@@ -41,6 +41,7 @@ rule "initialise income and asset thresholds"
 	thresholds.setCapitalUpperLimit(new BigDecimal("7999.99"));
 	thresholds.setGrossIncomeUpperLimit(new BigDecimal("2657.00"));
 	thresholds.setDisposableIncomeUpperLimit(new BigDecimal("733.00"));
+	thresholds.setDisposableIncomeUpperLimitDV(new BigDecimal("100888.00"));
 	thresholds.setMortgageMonthlyCap(new BigDecimal("545.00"));
 	insert(thresholds);
 end
