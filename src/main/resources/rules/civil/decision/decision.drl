@@ -114,7 +114,7 @@ rule "Disposable income over the limit but DV waiver applies"
 		
 	then
 		
-		System.out.println("new disposable income limit for DV" + $disposableLimit);
+		System.out.println($disposableLimit);
 		System.out.println(drools.getRule().getName());
 		$decision.setWithinDisposableIncomeLimit(true);
 		
@@ -124,7 +124,6 @@ rule "Disposable income over the limit but DV waiver applies"
 		BigDecimal maxBand1Amount = $thresholds.getDisposableBand2Limit().subtract($thresholds.getDisposableBand1Limit());
 		BigDecimal maxBand2Amount = $thresholds.getDisposableBand3Limit().subtract($thresholds.getDisposableBand2Limit());
 		BigDecimal maxBand3Amount = $thresholds.getDisposableIncomeUpperLimitDV().subtract($thresholds.getDisposableBand3Limit());
-		//BigDecimal maxBand4Amount = $thresholds.getDisposableIncomeUpperLimitDV().subtract($thresholds.getDisposableBand4Limit());
 		
 		BigDecimal totalContribution = BigDecimal.ZERO;
 		
@@ -135,8 +134,6 @@ rule "Disposable income over the limit but DV waiver applies"
 			if(band1Deductable.compareTo(BigDecimal.ZERO) >= 0){
 				totalContribution = totalContribution.add(maxBand1Amount.multiply($thresholds.getDisposableBand1()));
 				contributionDeductable = contributionDeductable.subtract(maxBand1Amount);
-				System.out.println("max band 1: " + maxBand1Amount);
-				System.out.println("band 1: " + totalContribution);
 			} else {
 				totalContribution = totalContribution.add(contributionDeductable.multiply($thresholds.getDisposableBand1()));
 				contributionDeductable = BigDecimal.ZERO;
@@ -149,8 +146,6 @@ rule "Disposable income over the limit but DV waiver applies"
 			if(band2Deductable.compareTo(BigDecimal.ZERO) >= 0){
 				totalContribution = totalContribution.add(maxBand2Amount.multiply($thresholds.getDisposableBand2()));
 				contributionDeductable = contributionDeductable.subtract(maxBand2Amount);
-				System.out.println("max band 2: " + maxBand2Amount);
-				System.out.println("band 2: " + totalContribution);
 			} else {
 				totalContribution = totalContribution.add(contributionDeductable.multiply($thresholds.getDisposableBand2()));
 				contributionDeductable = BigDecimal.ZERO;
@@ -163,7 +158,6 @@ rule "Disposable income over the limit but DV waiver applies"
 			if(band3Deductable.compareTo(BigDecimal.ZERO) >= 0){
 				totalContribution = totalContribution.add(maxBand3Amount.multiply($thresholds.getDisposableBand3()));
 				contributionDeductable = contributionDeductable.subtract(maxBand3Amount);
-				System.out.println("band 3: " + totalContribution);
 			} else {
 				totalContribution = totalContribution.add(contributionDeductable.multiply($thresholds.getDisposableBand3()));
 				contributionDeductable = BigDecimal.ZERO;
@@ -182,26 +176,6 @@ rule "Disposable income over the limit but DV waiver applies"
 		update($decision);
 		
 end
-
-/*
-rule "Disposable income based contribution required "
-	when
-		//$threshold : Thresholds( $capitalLowerLimit : capitalLowerLimit, $capitalUpperLimit:  capitalUpperLimit   )
-		
-		$thresholds : Thresholds( $disposableLimit: disposableIncomeUpperLimit && setDisposableIncomeUpperLimit(new BigDecimal("100000.00")))
-		$decision: CivilDecisionReport( domesticViolenceWaiver == true )
-		
-		$decision : CivilDecisionReport( $disposableIncome: disposableIncome !=null && disposableIncome.compareTo(new BigDecimal("733")) > 0)
-		
-	then
-		System.out.println(drools.getRule().getName());
-		$decision.setWithinCapitalAssetsLimit(true);
-		
-		$decision.setCapitalContribution($decision.getCapitalAssessment().subtract($threshold.getCapitalLowerLimit()));
-		update($decision);
-end
-*/
-
 
 rule "Disposable income over the limit"
 	when

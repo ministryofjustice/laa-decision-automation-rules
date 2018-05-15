@@ -182,7 +182,6 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 
 		this.decisionReport = new CivilDecisionReport();
 		kieSession.execute(Stream.of(civilCase, decisionReport).collect(Collectors.toList()));
-
 	}
 
 	@Then("^check waiver is applied$")
@@ -203,7 +202,6 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 	@Then("^gross income is (\\d+.\\d+)$")
 	public void grossIncomeIs(BigDecimal grossIncome) throws Throwable {
 		assertEquals(grossIncome, decisionReport.getGrossIncome());
-		System.out.println("gross income is : £ " + grossIncome);
 	}
 	
 	@Then("^capital assessment is (\\d+.\\d+)$")
@@ -213,25 +211,21 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 	
 	@Then("^disposable income is (\\d+.\\d+)$")
 	public void disposableIncomeIs(BigDecimal disposableIncomeIs) throws Throwable {
-		System.out.println("disposable income is : £ " + decisionReport.getDisposableIncome());
 		assertTrue(disposableIncomeIs.compareTo(decisionReport.getDisposableIncome()) == 0);
 	}
 	
 	@Then("^income contribution amount is (\\d+.\\d+)$")
 	public void incomeContrbutionIs(BigDecimal incomeContribution) throws Throwable {
-		System.out.println("contribution income is : £ " + decisionReport.getContributionAmount());
 		assertTrue(incomeContribution.compareTo(decisionReport.getContributionAmount()) == 0);
 	}
 	@Then("^capital contribution amount is (\\d+.\\d+)$")
 	public void capital_contribution_amount_is(BigDecimal capitalContribution) {
 	    // Write code here that turns the phrase above into concrete actions
-		System.out.println("contribution capital is : £ " + decisionReport.getCapitalContribution());
 		assertTrue(capitalContribution.compareTo(decisionReport.getCapitalContribution()) == 0);
 	}
 	
 	@Then("^citizen is eligible$")
 	public void meansPassed() throws Throwable {
-		//System.out.println("is means passed " + decisionReport.isMeansPassed());
 		assertTrue( decisionReport.isMeansPassed());
 	}
 	

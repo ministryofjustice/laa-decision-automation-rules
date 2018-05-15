@@ -23,7 +23,6 @@ import com.laa.model.Property;
 import java.math.MathContext;
 import com.laa.model.CapitalAssets;
 import com.laa.rule.factcheckers.Thresholds
-import com.laa.rule.factcheckers.MeansInformationCheck;
 
 
 rule "process applicant employed income"
