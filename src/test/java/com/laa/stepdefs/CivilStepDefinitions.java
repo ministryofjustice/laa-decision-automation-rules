@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,8 +32,6 @@ import com.laa.model.civil.CivilCase;
 import com.laa.model.civil.CivilDecisionReport;
 import com.laa.model.civil.enus.InvolvementType;
 import com.laa.model.enums.ProceedingType;
-//import com.laa.rule.*;
-//import com.laa.rule.factcheckers.ClientPartnerCheck;
 
 import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
@@ -115,22 +115,6 @@ public class CivilStepDefinitions extends SpringIntegrationTest {
 		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
 		means.setDependents(dependents);
 		
-	}
-	
-	@And("^citizen has partner")
-	public void citizenHasPartner(List<Dependent> dependents) throws Throwable {
-		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
-		means.setDependents(dependents);
-	}
-	
-	@And("^citizen has following partner residing with them:")
-	public void citizenHasEmployedPartner(List<EmployedIncome> employedincomeHistory) throws Throwable {
-
-		MeansInformation means = Optional.ofNullable(civilCase.getMeansInformation()).orElse(new MeansInformation());
-		Partner partner = Optional.ofNullable(means.getPartner()).orElse(new Partner());
-		means.setPartner(partner);
-		this.civilCase.setMeansInformation(means);
-		partner.setEmployedIncomeHistory(employedincomeHistory);
 	}
 
 	@And("^citizen has following outgoings:")

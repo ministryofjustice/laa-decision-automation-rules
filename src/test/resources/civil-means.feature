@@ -220,7 +220,7 @@ Citizen has a partner who needs assessment.
     															| name | relationToApplicant | dob |
     															| 	jon  | child_of_applicant | 2012-03-01 |
     															| 	sarah  | partner_of_applicant | 1987-03-01 |	
-    	And citizen has following partner residing with them:
+    	And citizen's partner is employed with following income history:
       															| pay |  incomeTax | nationalInsurance | frequency |employmentType|
           													| 1200 | 120 | 30 | monthly | non_armed_forces |
           													| 1200 | 120 | 30 | monthly | non_armed_forces |
